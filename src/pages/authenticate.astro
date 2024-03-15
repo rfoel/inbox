@@ -1,0 +1,15 @@
+---
+import { Auth } from '../components/Auth'
+import Layout from '../layouts/Layout.astro'
+
+if (Astro.cookies.has('inbox_jwt')) {
+  return Astro.redirect('/')
+}
+---
+
+<Layout title="Authenticate to your Inbox">
+  <main class="flex flex-col gap-4 items-center justify-center w-full h-screen">
+    <h1 class="text-3xl font-black">Inbox</h1>
+    <Auth client:load />
+  </main>
+</Layout>

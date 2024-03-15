@@ -22,3 +22,4 @@ pnpm-debug.log*
 
 # sst
 .sst
+cdk.context.json
