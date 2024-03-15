@@ -63,6 +63,19 @@ export const message = async (key: string) => {
 	const message = await dinamo.get<Message>({
 		key: { source: messageKey, target: messageKey },
 	});
+	await dinamo.update({
+		key: { source: messageKey, target: messageKey },
+		item: { read: true },
+	});
+	await Promise.all(
+		message.to.map((recipient) => {
+			const recipientKey = `recipient#${recipient.address}`;
+			return dinamo.update({
+				key: { source: recipientKey, target: messageKey },
+				item: { read: true },
+			});
+		}),
+	);
 	await dinamo.update<Message>({
 		key: { source: messageKey, target: messageKey },
 		item: { read: true },

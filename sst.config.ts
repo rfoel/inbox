@@ -112,6 +112,10 @@ export default {
 					hostedZone: process.env.DOMAIN_NAME,
 					domainName,
 				},
+				environment: {
+					TOTP_KEY: process.env.TOTP_KEY,
+					JWT_SECRET: process.env.JWT_SECRET,
+				},
 				bind: [bucket, table],
 			});
 			stack.addOutputs({

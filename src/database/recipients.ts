@@ -5,6 +5,7 @@ export type Recipient = {
 	target: string;
 	address: string;
 	name: string;
+	unread: number;
 	createdAt: number;
 	updatedAt: number;
 };
@@ -22,8 +23,21 @@ export const recipients = async () => {
 			target: relation.target,
 		})),
 	});
-	return recipients.map((recipient) => ({
-		address: recipient.address,
-		name: recipient.name,
-	}));
+
+	return Promise.all(
+		recipients.map(async (recipient) => {
+			const recipientKey = `recipient#${recipient.address}`;
+			const unreadMessages = await dinamo.query({
+				key: { source: recipientKey, target: { beginsWith: "message#" } },
+				query: {
+					read: false,
+				},
+			});
+			return {
+				address: recipient.address,
+				name: recipient.name,
+				unread: unreadMessages.data.length,
+			};
+		}),
+	);
 };

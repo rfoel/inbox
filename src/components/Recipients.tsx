@@ -28,8 +28,9 @@ export const RecipientsView = () => {
 	return (
 		<div className="flex flex-col bg-white rounded-xl w-[256px] min-w-[256px]">
 			<h1 className="text-2xl font-black p-4">Recipients</h1>
+
 			{query.data?.length ? (
-				<div className="flex flex-col">
+				<div className="flex flex-col overflow-y-scroll overflow-x-hidden">
 					{query.data
 						.sort(
 							(a, b) =>
@@ -40,7 +41,7 @@ export const RecipientsView = () => {
 							<button
 								key={recipient.address}
 								className={cn(
-									"p-4 hover:bg-green-100 w-full border-l-4 border-transparent text-left",
+									"p-4 hover:bg-green-100 w-full border-l-4 border-transparent text-left flex items-center gap-2",
 									{
 										"bg-green-50 border-green-200":
 											recipient.address === appContext.state.recipient,
@@ -49,13 +50,16 @@ export const RecipientsView = () => {
 								onClick={() => handleClick(recipient.address)}
 								type="button"
 							>
-								{recipient.address}
+								<div>{recipient.address}</div>
+								{recipient.unread > 0 ? (
+									<div className="flex items-center justify-center bg-red-500 text-white h-5 w-5 rounded-full text-xs">
+										{recipient.unread}
+									</div>
+								) : null}
 							</button>
 						))}
 				</div>
-			) : (
-				<div />
-			)}
+			) : null}
 		</div>
 	);
 };

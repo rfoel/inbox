@@ -1,9 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAppContext } from "./AppContext";
 import type { MessageWithContent } from "../database/messages";
+import { useEffect } from "react";
 
 export const MessageView = () => {
 	const appContext = useAppContext();
+	const queryClient = useQueryClient();
 	const query = useQuery<MessageWithContent>({
 		queryKey: ["message", appContext.state.message],
 		queryFn: () =>
@@ -12,6 +14,16 @@ export const MessageView = () => {
 			),
 		enabled: !!appContext.state.message,
 	});
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: no
+	useEffect(() => {
+		queryClient.invalidateQueries({
+			queryKey: ["messages", appContext.state.recipient],
+		});
+		queryClient.invalidateQueries({
+			queryKey: ["recipients"],
+		});
+	}, [query.data]);
 
 	return (
 		<div className="flex flex-col gap-4 flex-grow">

@@ -6,7 +6,9 @@ import react from "@astrojs/react";
 
 export default defineConfig({
 	output: "server",
-	adapter: aws(),
+	adapter: aws({
+		serverRoutes: ["api/*"],
+	}),
 	integrations: [tailwind(), react()],
 	vite: {
 		optimizeDeps: {

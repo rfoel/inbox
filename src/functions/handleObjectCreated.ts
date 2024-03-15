@@ -59,11 +59,12 @@ export const handler: S3Handler = async (event) => {
 								target: messageKey,
 								recipient: address,
 								key: object.key,
+								read: false,
 								...message,
 							},
 						});
 						await dinamo.put({
-							item: { source: recipientKey, target: messageKey },
+							item: { source: recipientKey, target: messageKey, read: false },
 						});
 					}),
 				);

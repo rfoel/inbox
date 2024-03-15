@@ -32,13 +32,13 @@ export const MessagesView = () => {
 				payload: query.data[0].key,
 			});
 		}
-	}, [query.data]);
+	}, [appContext.state.recipient]);
 
 	return (
 		<div className="flex flex-col bg-white rounded-xl w-[352px] min-w-[352px]">
 			<h1 className="text-2xl font-black p-4">Messages</h1>
 			{query.data?.length ? (
-				<div className="flex flex-col">
+				<div className="flex flex-col overflow-y-scroll overflow-x-hidden">
 					{query.data.map((message) => (
 						<button
 							key={message.key}
