@@ -1,6 +1,6 @@
 import { OTPInput, type SlotProps } from "input-otp";
 import { cn } from "../utils/tailwind";
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 function FakeCaret() {
 	return (

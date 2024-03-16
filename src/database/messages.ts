@@ -36,8 +36,12 @@ export const messages = async (recipient: string) => {
 	const relations = await dinamo.query<{ source: string; target: string }>({
 		key: {
 			source: `recipient#${recipient}`,
+		},
+		query: {
 			target: { beginsWith: "message#" },
 		},
+		indexName: "dateIndex",
+		scanIndexForward: false,
 	});
 	if (!relations.data.length) {
 		return [];
@@ -48,14 +52,7 @@ export const messages = async (recipient: string) => {
 			target: relation.target,
 		})),
 	});
-	return messages.map((message) => ({
-		key: message.key,
-		date: message.date,
-		from: message.from,
-		subject: message.subject,
-		to: message.to,
-		read: message.read,
-	}));
+	return messages.sort((a, b) => b.date - a.date);
 };
 
 export const message = async (key: string) => {

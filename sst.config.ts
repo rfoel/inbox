@@ -10,15 +10,17 @@ export default {
 		};
 	},
 	stacks(app) {
-		app.stack(async function Inbox({ stack }) {
+		app.stack(({ stack }) => {
 			const prefix = stack.stage === "prod" ? "" : `${stack.stage}.`;
 
 			const table = new sst.Table(stack, "table", {
 				fields: {
 					source: "string",
 					target: "string",
+					date: "number",
 				},
 				primaryIndex: { partitionKey: "source", sortKey: "target" },
+				localIndexes: { dateIndex: { sortKey: "date" } },
 			});
 
 			const handleObjectCreated = new sst.Function(
@@ -66,15 +68,17 @@ export default {
 				deleteExisting: true,
 			});
 
-			new aws_ses.ReceiptRuleSet(stack, "receipt-rule-set", {
-				rules: [
-					{
-						receiptRuleName: stack.stage,
-						enabled: true,
-						recipients: [recipient],
-						actions: [action],
-					},
-				],
+			const receiptRuleSet = aws_ses.ReceiptRuleSet.fromReceiptRuleSetName(
+				stack,
+				"receipt-rule-set",
+				"inbox",
+			);
+
+			receiptRuleSet.addRule(stack.stage, {
+				receiptRuleName: stack.stage,
+				enabled: true,
+				recipients: [recipient],
+				actions: [action],
 			});
 
 			const statement = new aws_iam.PolicyStatement({
@@ -90,18 +94,6 @@ export default {
 					},
 				},
 			});
-
-			const existingIdentity = aws_ses.EmailIdentity.fromEmailIdentityName(
-				stack,
-				"existing-identity",
-				process.env.DOMAIN_NAME,
-			);
-
-			if (!existingIdentity) {
-				new aws_ses.EmailIdentity(stack, "identity", {
-					identity: aws_ses.Identity.domain(process.env.DOMAIN_NAME),
-				});
-			}
 
 			bucket.attachPermissions([statement]);
 			handleObjectCreated.bind([bucket, table]);
