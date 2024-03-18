@@ -1,6 +1,12 @@
 import type { SSTConfig } from "sst";
 import * as sst from "sst/constructs";
-import { aws_ses, aws_ses_actions, aws_iam, aws_route53 } from "aws-cdk-lib";
+import {
+	aws_ses,
+	aws_ses_actions,
+	aws_iam,
+	aws_route53,
+	aws_certificatemanager,
+} from "aws-cdk-lib";
 
 export default {
 	config(_input) {
@@ -46,16 +52,17 @@ export default {
 				bucket: bucket.cdk.bucket,
 			});
 
-			const hostedZone =
-				process.env.HAS_ROUTE_53_DOMAIN === "true"
-					? aws_route53.HostedZone.fromLookup(stack, "hosted-zone", {
-							domainName: process.env.DOMAIN_NAME,
-					  })
-					: undefined;
+			const isExternalDomain = process.env.IS_EXTERNAL_DOMAIN === "true";
+
+			const hostedZone = isExternalDomain
+				? null
+				: aws_route53.HostedZone.fromLookup(stack, "hosted-zone", {
+						domainName: process.env.DOMAIN_NAME,
+				  });
 
 			const recipient = `${prefix}${process.env.DOMAIN_NAME}`;
 
-			if (hostedZone && process.env.HAS_ROUTE_53_DOMAIN === "true") {
+			if (hostedZone) {
 				new aws_route53.MxRecord(stack, "mx", {
 					values: [
 						{
@@ -100,14 +107,22 @@ export default {
 			handleObjectCreated.bind([bucket, table]);
 
 			const domainName = `${prefix}inbox.${process.env.DOMAIN_NAME}`;
+
 			const site = new sst.AstroSite(stack, "site", {
-				customDomain:
-					process.env.HAS_ROUTE_53_DOMAIN === "true"
-						? {
-								hostedZone: process.env.DOMAIN_NAME,
-								domainName,
-						  }
-						: undefined,
+				customDomain: {
+					isExternalDomain,
+					hostedZone: isExternalDomain ? undefined : process.env.DOMAIN_NAME,
+					domainName,
+					cdk: {
+						certificate: isExternalDomain
+							? aws_certificatemanager.Certificate.fromCertificateArn(
+									stack,
+									"certificate",
+									process.env.EXTERNAL_DOMAIN_CERTIFICATE_ARN,
+							  )
+							: undefined,
+					},
+				},
 				environment: {
 					TOTP_KEY: process.env.TOTP_KEY,
 					JWT_SECRET: process.env.JWT_SECRET,
