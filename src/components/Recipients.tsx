@@ -78,7 +78,7 @@ const Domain = ({
 	);
 
 	return (
-		<div key={domain}>
+		<div key={domain} className="overflow-hidden">
 			<div className="flex items-center justify-between font-bold text-sm p-4">
 				<div className="flex gap-2 items-center">
 					{unread > 0 ? (
