@@ -46,27 +46,28 @@ export default {
 				bucket: bucket.cdk.bucket,
 			});
 
-			const hostedZone = aws_route53.HostedZone.fromLookup(
-				stack,
-				"hosted-zone",
-				{
-					domainName: process.env.DOMAIN_NAME,
-				},
-			);
+			const hostedZone =
+				process.env.HAS_ROUTE_53_DOMAIN === "true"
+					? aws_route53.HostedZone.fromLookup(stack, "hosted-zone", {
+							domainName: process.env.DOMAIN_NAME,
+					  })
+					: undefined;
 
 			const recipient = `${prefix}${process.env.DOMAIN_NAME}`;
 
-			new aws_route53.MxRecord(stack, "mx", {
-				values: [
-					{
-						hostName: "inbound-smtp.us-east-1.amazonaws.com",
-						priority: 10,
-					},
-				],
-				recordName: recipient,
-				zone: hostedZone,
-				deleteExisting: true,
-			});
+			if (hostedZone && process.env.HAS_ROUTE_53_DOMAIN === "true") {
+				new aws_route53.MxRecord(stack, "mx", {
+					values: [
+						{
+							hostName: "inbound-smtp.us-east-1.amazonaws.com",
+							priority: 10,
+						},
+					],
+					recordName: recipient,
+					zone: hostedZone,
+					deleteExisting: true,
+				});
+			}
 
 			const receiptRuleSet = aws_ses.ReceiptRuleSet.fromReceiptRuleSetName(
 				stack,
@@ -100,10 +101,13 @@ export default {
 
 			const domainName = `${prefix}inbox.${process.env.DOMAIN_NAME}`;
 			const site = new sst.AstroSite(stack, "site", {
-				customDomain: {
-					hostedZone: process.env.DOMAIN_NAME,
-					domainName,
-				},
+				customDomain:
+					process.env.HAS_ROUTE_53_DOMAIN === "true"
+						? {
+								hostedZone: process.env.DOMAIN_NAME,
+								domainName,
+						  }
+						: undefined,
 				environment: {
 					TOTP_KEY: process.env.TOTP_KEY,
 					JWT_SECRET: process.env.JWT_SECRET,
